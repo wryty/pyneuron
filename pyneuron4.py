@@ -39,7 +39,7 @@ model.fit(X_train, y_train, epochs=100, batch_size=32, verbose=1)
 _, accuracy = model.evaluate(X_test, y_test, verbose=0)
 print('Точность модели: %.2f%%' % (accuracy * 100))
 
-# Вывод статистики
+# Вывод статистики (можно и в pyneuron2 запихать, но все таки здесь я думаю более уместно (тут нейросеть вообще не работает))
 categories = categorical_columns.copy()
 categories.remove('Возраст')
 for category in categories:
