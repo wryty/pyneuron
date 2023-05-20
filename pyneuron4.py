@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 
-data = pd.read_csv('data.csv')
+data = pd.read_csv('data2.csv')
 
 label_encoder = LabelEncoder()
 
@@ -39,16 +39,26 @@ model.fit(X_train, y_train, epochs=100, batch_size=32, verbose=1)
 _, accuracy = model.evaluate(X_test, y_test, verbose=0)
 print('Точность модели: %.2f%%' % (accuracy * 100))
 
+# Вывод статистики
+categories = categorical_columns.copy()
+categories.remove('Возраст')
+for category in categories:
+    statistics = data.groupby(category)['Статус'].mean() * 100
+    print(f'{category.upper()}:')
+    for value, percent in statistics.items():
+        print(f"Стажеры из {category} '{value}' проходят стажировку с вероятностью {percent:.2f}%")
+    print()
+
 new_data = pd.DataFrame({
     'Фамилия': ['Сабиров'],
     'Имя': ['Айдар'],
     'Отчество': ['Рустамович'],
     'Возраст': [25.0],
     'Город': ['Санкт-Петербург'],
-    'Вуз': ['СПбПУ'],
-    'Образование': ['Высшее'],
+    'Вуз': ['МИФИ'],
+    'Образование': ['Среднее'],
     'Направление стажировки': ['IT'],
-    'Канал привлечения': ['Рекомендация от учителя']
+    'Канал привлечения': ['Рекламные ролики']
 })
 new_data_encoded = new_data.copy()
 
