@@ -6,12 +6,12 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 
 data = pd.read_csv('data2.csv')
-
+candidates = pd.read_csv('candidates.csv')
 label_encoder = LabelEncoder()
 
 #data['Статус'] = label_encoder.fit_transform(data['Статус'])
 
-data['Статус'] = (data['Статус'] == 'прошел')
+data['Статус'] = data['Статус'].map({'прошел': 1, 'не прошел': 0})
 categorical_columns = ['Вуз', 'Образование', 'Город', 'Возраст', 'Канал привлечения']
 numerical_columns = ['Возраст']
 
@@ -49,18 +49,7 @@ for category in categories:
         print(f"Стажеры из {category} '{value}' проходят стажировку с вероятностью {percent:.2f}%")
     print()
 
-new_data = pd.DataFrame({
-    'Фамилия': ['Сабиров'],
-    'Имя': ['Айдар'],
-    'Отчество': ['Рустамович'],
-    'Возраст': [25.0],
-    'Город': ['Санкт-Петербург'],
-    'Вуз': ['МИФИ'],
-    'Образование': ['Среднее'],
-    'Направление стажировки': ['IT'],
-    'Канал привлечения': ['Рекламные ролики']
-})
-new_data_encoded = new_data.copy()
+new_data_encoded = candidates.copy()
 
 new_categorical_encoded = onehot_encoder.transform(new_data_encoded[categorical_columns])
 new_categorical_df = pd.DataFrame(new_categorical_encoded, columns=onehot_encoder.get_feature_names_out(categorical_columns))
@@ -68,7 +57,21 @@ new_data_encoded = pd.concat([new_categorical_df, new_data_encoded[numerical_col
 
 new_data_encoded[numerical_columns] = scaler.transform(new_data_encoded[numerical_columns])
 
-probability = model.predict(new_data_encoded)
-prediction = probability[0][0]
+probabilities = model.predict(new_data_encoded)
+predictions = probabilities.flatten()
 
-print(f'Стажер {new_data.iloc[0]["Имя"]} может пройти стажировку с вероятностью {prediction * 100:.2f}%')
+candidates['Вероятность'] = predictions * 100
+candidates['Рекомендация'] = np.where(predictions > 0.5, 'Рекомендован', 'Не рекомендован')
+sorted_candidates = candidates.sort_values(by=['Рекомендация', 'Вероятность'], ascending=[False, False])
+
+print(sorted_candidates)
+
+
+
+for _, candidate in sorted_candidates.iterrows():
+    recommendation = candidate['Рекомендация']
+    probability = candidate['Вероятность']
+    if recommendation == 'Рекомендованный':
+        print(f"Кандидат {candidate['Имя']} {candidate['Фамилия']}: Рекомендован, вероятность прохождения стажировки: {probability:.2f}%")
+    else:
+        print(f"Кандидат {candidate['Имя']} {candidate['Фамилия']}: {candidate['Рекомендация']}, вероятность прохождения стажировки: {probability:.2f}%")
